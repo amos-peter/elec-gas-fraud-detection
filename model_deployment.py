@@ -1,3 +1,19 @@
+import os
+import subprocess
+import sys
+
+# Function to install a package using pip
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+# Ensure imbalanced-learn is installed
+try:
+    import imblearn
+except ImportError:
+    install("imbalanced-learn")
+finally:
+    from imblearn.over_sampling import SMOTE
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -5,11 +21,6 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import xgboost as xgb
-
-try:
-    from imblearn.over_sampling import SMOTE
-except ImportError as e:
-    st.error("Failed to import imblearn. Please check your requirements.txt file.")
 
 # Function to load data
 @st.cache_data
