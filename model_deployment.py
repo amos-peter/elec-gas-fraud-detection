@@ -32,8 +32,8 @@ st.title("XGBoost Model Trainer and Fraud Predictor")
 # Sidebar with description and download links
 st.sidebar.header("About")
 st.sidebar.write("""
-This app trains an XGBoost model to predict fraud based on the provided dataset. 
-You can download the example datasets using the links below.
+This app trains an XGBoost model to predict fraud based on the provided dataset. model_train is used to train the model, and model_test is used to evaluate the model and make predictions.  
+You can download the example datasets using the links below. 
 """)
 st.sidebar.download_button(
     label="Download model_train.csv",
