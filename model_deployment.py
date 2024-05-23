@@ -5,7 +5,11 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import xgboost as xgb
-from imblearn.over_sampling import SMOTE
+
+try:
+    from imblearn.over_sampling import SMOTE
+except ImportError as e:
+    st.error("Failed to import imblearn. Please check your requirements.txt file.")
 
 # Function to load data
 @st.cache_data
@@ -47,31 +51,34 @@ y = train_data[target_column]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Apply SMOTE to balance the classes in the training set
-sm = SMOTE(random_state=42)
-X_train_resampled, y_train_resampled = sm.fit_resample(X_train, y_train)
+if 'SMOTE' in locals():
+    sm = SMOTE(random_state=42)
+    X_train_resampled, y_train_resampled = sm.fit_resample(X_train, y_train)
 
-# Calculate scale_pos_weight for XGBoost
-scale_pos_weight = y_train_resampled.value_counts()[0] / y_train_resampled.value_counts()[1]
+    # Calculate scale_pos_weight for XGBoost
+    scale_pos_weight = y_train_resampled.value_counts()[0] / y_train_resampled.value_counts()[1]
 
-# Train the model
-model = train_model(X_train_resampled, y_train_resampled, scale_pos_weight)
-st.success("Model trained successfully.")
-st.write("You can now use this trained model for predictions.")
+    # Train the model
+    model = train_model(X_train_resampled, y_train_resampled, scale_pos_weight)
+    st.success("Model trained successfully.")
+    st.write("You can now use this trained model for predictions.")
 
-# Evaluate the model using weighted average for metrics
-y_train_pred = model.predict(X_test)
-accuracy = accuracy_score(y_test, y_train_pred)
-precision = precision_score(y_test, y_train_pred, average='weighted')
-recall = recall_score(y_test, y_train_pred, average='weighted')
-f1 = f1_score(y_test, y_train_pred, average='weighted')
+    # Evaluate the model using weighted average for metrics
+    y_train_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_train_pred)
+    precision = precision_score(y_test, y_train_pred, average='weighted')
+    recall = recall_score(y_test, y_train_pred, average='weighted')
+    f1 = f1_score(y_test, y_train_pred, average='weighted')
 
-# Display evaluation metrics
-st.subheader("Model Evaluation Metrics")
-evaluation_metrics = pd.DataFrame({
-    'Metric': ['Accuracy', 'Precision', 'Recall', 'F1-Score'],
-    'Score': [accuracy, precision, recall, f1]
-})
-st.write(evaluation_metrics)
+    # Display evaluation metrics
+    st.subheader("Model Evaluation Metrics")
+    evaluation_metrics = pd.DataFrame({
+        'Metric': ['Accuracy', 'Precision', 'Recall', 'F1-Score'],
+        'Score': [accuracy, precision, recall, f1]
+    })
+    st.write(evaluation_metrics)
+else:
+    st.error("SMOTE not available. Model training cannot proceed.")
 
 # File uploader for testing data
 uploaded_test_file = st.file_uploader("Choose a CSV file to predict", type="csv")
@@ -106,44 +113,4 @@ if uploaded_test_file is not None:
     st.subheader("Prediction Results Visualization")
     fig, ax = plt.subplots(1, 2, figsize=(15, 5))
 
-    results['predicted_value'].value_counts().plot(kind='bar', ax=ax[0])
-    ax[0].set_title("Count of Predicted Fraudulent and Non-Fraudulent Transactions")
-    ax[0].set_xlabel("Predicted Value (1=Fraud, 0=Non-Fraud)")
-    ax[0].set_ylabel("Count")
-
-    sns.histplot(results['fraud_probability'], bins=20, kde=True, ax=ax[1])
-    ax[1].set_title("Distribution of Fraud Probability Scores")
-    ax[1].set_xlabel("Fraud Probability")
-    ax[1].set_ylabel("Frequency")
-
-    st.pyplot(fig)
-
-    # Feature importance
-    st.subheader("Feature Importance")
-    importance = model.feature_importances_
-    feature_importance = pd.DataFrame({'feature': features, 'importance': importance})
-    feature_importance = feature_importance.sort_values(by='importance', ascending=False)
-
-    fig, ax = plt.subplots()
-    sns.barplot(x='importance', y='feature', data=feature_importance, ax=ax)
-    ax.set_title("Feature Importance")
-    st.pyplot(fig)
-
-    # Correlation matrix
-    st.subheader("Correlation Matrix")
-    corr_matrix = test_data[features].corr()
-    fig, ax = plt.subplots(figsize=(10, 8))
-    sns.heatmap(corr_matrix, annot=True, fmt='.2f', cmap='coolwarm', ax=ax)
-    ax.set_title("Correlation Matrix")
-    st.pyplot(fig)
-
-    # Additional demographic visualizations
-    st.subheader("Demographic Information Visualization")
-    demography_column = st.selectbox("Select a demographic column to visualize", test_data.columns.difference(['client_id', target_column]))
-
-    fig, ax = plt.subplots()
-    test_data[demography_column].value_counts().plot(kind='bar', ax=ax)
-    ax.set_title(f"Distribution of {demography_column}")
-    ax.set_xlabel(demography_column)
-    ax.set_ylabel("Count")
-    st.pyplot(fig)
+    results['predicted_value'].value_counts().plot(kind
