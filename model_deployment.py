@@ -1,17 +1,3 @@
-import subprocess
-import sys
-
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-
-# Ensure imbalanced-learn is installed
-try:
-    from imblearn.over_sampling import SMOTE
-except ImportError:
-    install("imbalanced-learn==0.8.0")
-finally:
-    from imblearn.over_sampling import SMOTE
-
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -19,6 +5,7 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import xgboost as xgb
+from imblearn.over_sampling import SMOTE
 
 # Function to load data
 @st.cache_data
@@ -42,6 +29,25 @@ def train_model(X_train, y_train, scale_pos_weight):
 # Streamlit interface
 st.title("XGBoost Model Trainer and Fraud Predictor")
 
+# Sidebar with description and download links
+st.sidebar.header("About")
+st.sidebar.write("""
+This app trains an XGBoost model to predict fraud based on the provided dataset. 
+You can download the example datasets using the links below.
+""")
+st.sidebar.download_button(
+    label="Download model_train.csv",
+    data=open("model_train.csv", "rb").read(),
+    file_name="model_train.csv",
+    mime="text/csv"
+)
+st.sidebar.download_button(
+    label="Download model_test.csv",
+    data=open("model_test.csv", "rb").read(),
+    file_name="model_test.csv",
+    mime="text/csv"
+)
+
 # Automatically load training data
 train_file_path = 'model_train.csv'
 train_data = load_data(train_file_path)
@@ -60,34 +66,31 @@ y = train_data[target_column]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Apply SMOTE to balance the classes in the training set
-if 'SMOTE' in locals():
-    sm = SMOTE(random_state=42)
-    X_train_resampled, y_train_resampled = sm.fit_resample(X_train, y_train)
+sm = SMOTE(random_state=42)
+X_train_resampled, y_train_resampled = sm.fit_resample(X_train, y_train)
 
-    # Calculate scale_pos_weight for XGBoost
-    scale_pos_weight = y_train_resampled.value_counts()[0] / y_train_resampled.value_counts()[1]
+# Calculate scale_pos_weight for XGBoost
+scale_pos_weight = y_train_resampled.value_counts()[0] / y_train_resampled.value_counts()[1]
 
-    # Train the model
-    model = train_model(X_train_resampled, y_train_resampled, scale_pos_weight)
-    st.success("Model trained successfully.")
-    st.write("You can now use this trained model for predictions.")
+# Train the model
+model = train_model(X_train_resampled, y_train_resampled, scale_pos_weight)
+st.success("Model trained successfully.")
+st.write("You can now use this trained model for predictions.")
 
-    # Evaluate the model using weighted average for metrics
-    y_train_pred = model.predict(X_test)
-    accuracy = accuracy_score(y_test, y_train_pred)
-    precision = precision_score(y_test, y_train_pred, average='weighted')
-    recall = recall_score(y_test, y_train_pred, average='weighted')
-    f1 = f1_score(y_test, y_train_pred, average='weighted')
+# Evaluate the model using weighted average for metrics
+y_train_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_train_pred)
+precision = precision_score(y_test, y_train_pred, average='weighted')
+recall = recall_score(y_test, y_train_pred, average='weighted')
+f1 = f1_score(y_test, y_train_pred, average='weighted')
 
-    # Display evaluation metrics
-    st.subheader("Model Evaluation Metrics")
-    evaluation_metrics = pd.DataFrame({
-        'Metric': ['Accuracy', 'Precision', 'Recall', 'F1-Score'],
-        'Score': [accuracy, precision, recall, f1]
-    })
-    st.write(evaluation_metrics)
-else:
-    st.error("SMOTE not available. Model training cannot proceed.")
+# Display evaluation metrics
+st.subheader("Model Evaluation Metrics")
+evaluation_metrics = pd.DataFrame({
+    'Metric': ['Accuracy', 'Precision', 'Recall', 'F1-Score'],
+    'Score': [accuracy, precision, recall, f1]
+})
+st.write(evaluation_metrics)
 
 # File uploader for testing data
 uploaded_test_file = st.file_uploader("Choose a CSV file to predict", type="csv")
