@@ -1,3 +1,17 @@
+import subprocess
+import sys
+
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+# Ensure imbalanced-learn is installed
+try:
+    from imblearn.over_sampling import SMOTE
+except ImportError:
+    install("imbalanced-learn==0.8.0")
+finally:
+    from imblearn.over_sampling import SMOTE
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -5,7 +19,6 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import xgboost as xgb
-from imblearn.over_sampling import SMOTE
 
 # Function to load data
 @st.cache_data
