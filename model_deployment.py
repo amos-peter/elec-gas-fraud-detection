@@ -8,7 +8,7 @@ def install(package):
 try:
     from imblearn.over_sampling import SMOTE
 except ImportError:
-    install("imbalanced-learn")
+    install("imbalanced-learn==0.8.0")
 finally:
     from imblearn.over_sampling import SMOTE
 
