@@ -113,4 +113,44 @@ if uploaded_test_file is not None:
     st.subheader("Prediction Results Visualization")
     fig, ax = plt.subplots(1, 2, figsize=(15, 5))
 
-    results['predicted_value'].value_counts().plot(kind
+    results['predicted_value'].value_counts().plot(kind='bar', ax=ax[0])
+    ax[0].set_title("Count of Predicted Fraudulent and Non-Fraudulent Transactions")
+    ax[0].set_xlabel("Predicted Value (1=Fraud, 0=Non-Fraud)")
+    ax[0].set_ylabel("Count")
+
+    sns.histplot(results['fraud_probability'], bins=20, kde=True, ax=ax[1])
+    ax[1].set_title("Distribution of Fraud Probability Scores")
+    ax[1].set_xlabel("Fraud Probability")
+    ax[1].set_ylabel("Frequency")
+
+    st.pyplot(fig)
+
+    # Feature importance
+    st.subheader("Feature Importance")
+    importance = model.feature_importances_
+    feature_importance = pd.DataFrame({'feature': features, 'importance': importance})
+    feature_importance = feature_importance.sort_values(by='importance', ascending=False)
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+    sns.barplot(x='importance', y='feature', data=feature_importance, ax=ax)
+    ax.set_title("Feature Importance")
+    st.pyplot(fig)
+
+    # Correlation matrix
+    st.subheader("Correlation Matrix")
+    corr_matrix = test_data[features].corr()
+    fig, ax = plt.subplots(figsize=(15, 10))
+    sns.heatmap(corr_matrix, annot=True, fmt='.2f', cmap='coolwarm', ax=ax)
+    ax.set_title("Correlation Matrix")
+    st.pyplot(fig)
+
+    # Additional demographic visualizations
+    st.subheader("Demographic Information Visualization")
+    demography_column = st.selectbox("Select a demographic column to visualize", test_data.columns.difference(['client_id', target_column]))
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    test_data[demography_column].value_counts().plot(kind='bar', ax=ax)
+    ax.set_title(f"Distribution of {demography_column}")
+    ax.set_xlabel(demography_column)
+    ax.set_ylabel("Count")
+    st.pyplot(fig)
