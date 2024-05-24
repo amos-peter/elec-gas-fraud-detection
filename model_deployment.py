@@ -106,7 +106,7 @@ evaluation_metrics = pd.DataFrame({
 st.write(evaluation_metrics)
 
 # File uploader for testing data
-uploaded_test_file = st.file_uploader("Choose a CSV file to predict", type="csv")
+uploaded_test_file = st.sidebar.file_uploader("Choose a CSV file to predict", type="csv")
 if uploaded_test_file is not None:
     test_data = load_data(uploaded_test_file)
     st.write("Test Data Preview:", test_data.head())
@@ -167,15 +167,4 @@ if uploaded_test_file is not None:
     fig, ax = plt.subplots(figsize=(15, 10))
     sns.heatmap(corr_matrix, annot=True, fmt='.2f', cmap='coolwarm', ax=ax)
     ax.set_title("Correlation Matrix")
-    st.pyplot(fig)
-
-    # Additional demographic visualizations
-    st.subheader("Demographic Information Visualization")
-    demography_column = st.selectbox("Select a demographic column to visualize", test_data.columns.difference(['client_id', target_column]))
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-    test_data[demography_column].value_counts().plot(kind='bar', ax=ax)
-    ax.set_title(f"Distribution of {demography_column}")
-    ax.set_xlabel(demography_column)
-    ax.set_ylabel("Count")
     st.pyplot(fig)
