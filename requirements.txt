@@ -5,3 +5,4 @@ seaborn
 scikit-learn
 xgboost
 imbalanced-learn==0.8.0
+lightgbm
