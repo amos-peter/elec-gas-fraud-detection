@@ -104,7 +104,7 @@ if uploaded_test_file is not None:
 
     # Make predictions
     y_pred_prob = model.predict_proba(X_test_final)[:, 1]
-    y_pred_prob = np.round(y_pred_prob, 2)  # Format to 2 decimal places
+    y_pred_prob = np.round(y_pred_prob, 1)  # Format to 2 decimal places
     y_pred = (y_pred_prob >= 0.6).astype(int)  # Threshold set to 0.60 for fraud
 
     # Create a DataFrame with client_id, prediction probabilities, and predicted values
