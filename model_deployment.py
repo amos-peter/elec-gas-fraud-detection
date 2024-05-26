@@ -11,6 +11,17 @@ from sklearn.linear_model import LassoCV
 import lightgbm as lgb
 import streamlit as st
 
+# Ensure imbalanced-learn is installed
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+try:
+    from imblearn.over_sampling import SMOTE
+except ImportError:
+    install("imbalanced-learn==0.8.0")
+finally:
+    from imblearn.over_sampling import SMOTE
+
 # Function to clean column names
 def clean_column_names(df):
     df.columns = df.columns.str.replace('[^A-Za-z0-9_]+', '', regex=True)
