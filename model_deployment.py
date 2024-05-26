@@ -1,26 +1,27 @@
 import subprocess
 import sys
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LassoCV
-import lightgbm as lgb
-import streamlit as st
 
-# Ensure imbalanced-learn is installed
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
+# Ensure imbalanced-learn is installed
 try:
     from imblearn.over_sampling import SMOTE
 except ImportError:
     install("imbalanced-learn==0.8.0")
 finally:
     from imblearn.over_sampling import SMOTE
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LassoCV
+import lightgbm as lgb
+import streamlit as st
 
 # Function to clean column names
 def clean_column_names(df):
@@ -97,10 +98,6 @@ numerical_features = [
 scaler = StandardScaler()
 model_train_encoded[numerical_features] = scaler.fit_transform(model_train_encoded[numerical_features])
 
-# Display the processed data
-st.subheader("Data after Encoding and Scaling")
-st.write(model_train_encoded.head())
-
 # Define features and target
 X = model_train_encoded.drop(['target', 'client_id'], axis=1)
 y = model_train_encoded['target']
@@ -111,8 +108,6 @@ lasso.fit(X, y)
 
 # Select features with non-zero coefficients
 selected_features_lasso_0 = X.columns[(lasso.coef_ != 0)]
-st.subheader("Selected Features after Lasso")
-st.write(selected_features_lasso_0)
 
 # Prepare the training and testing datasets
 X_train, X_test, y_train, y_test = train_test_split(X[selected_features_lasso_0], y, test_size=0.2, random_state=42)
@@ -120,12 +115,6 @@ X_train, X_test, y_train, y_test = train_test_split(X[selected_features_lasso_0]
 # Apply SMOTE to balance the training set
 smote = SMOTE(random_state=42)
 X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
-
-# Check class distribution
-st.subheader("Class distribution after SMOTE:")
-class_distribution = pd.Series(y_train_resampled).value_counts().reset_index()
-class_distribution.columns = ['target', 'count']
-st.write(class_distribution)
 
 # Calculate scale_pos_weight
 scale_pos_weight = y_train_resampled.value_counts()[0] / y_train_resampled.value_counts()[1]
@@ -146,7 +135,14 @@ best_params = {
 # Train the model
 best_lgb_model = train_model(X_train_resampled, y_train_resampled, best_params)
 st.success("Model trained successfully.")
-st.write("You can now use this trained model for predictions.")
+st.write("""
+1) The training model datasets was loaded.
+2) Encoded and Feature Scaling was applied for numerical and categorical features.
+3) Feature Selection of Lasso Regularization was applied for selecting important features.
+4) LightGBM model was applied in the training model.
+
+You can now use this trained model for predictions.
+""")
 
 # Evaluate the model using weighted average for metrics
 lgb_y_pred = best_lgb_model.predict(X_test)
@@ -239,11 +235,3 @@ if uploaded_test_file is not None:
     ax.set_title("Top 10 Feature Importance for Test Prediction")
     st.pyplot(fig)
 
-    # Correlation matrix for top 10 features
-    st.subheader("Correlation Matrix for Top 10 Features")
-    top_10_features = feature_importance['feature']
-    corr_matrix = test_data_encoded[top_10_features].corr()
-    fig, ax = plt.subplots(figsize=(15, 10))
-    sns.heatmap(corr_matrix, annot=True, fmt='.2f', cmap='coolwarm', ax=ax)
-    ax.set_title("Correlation Matrix for Top 10 Features")
-    st.pyplot(fig)
